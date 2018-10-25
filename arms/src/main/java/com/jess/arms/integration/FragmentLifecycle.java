@@ -1,18 +1,18 @@
-/**
-  * Copyright 2017 JessYan
-  *
-  * Licensed under the Apache License, Version 2.0 (the "License");
-  * you may not use this file except in compliance with the License.
-  * You may obtain a copy of the License at
-  *
-  *      http://www.apache.org/licenses/LICENSE-2.0
-  *
-  * Unless required by applicable law or agreed to in writing, software
-  * distributed under the License is distributed on an "AS IS" BASIS,
-  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  * See the License for the specific language governing permissions and
-  * limitations under the License.
-  */
+/*
+ * Copyright 2017 JessYan
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jess.arms.integration;
 
 import android.content.Context;
@@ -21,14 +21,14 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.view.View;
-
 import com.jess.arms.base.delegate.FragmentDelegate;
 import com.jess.arms.base.delegate.FragmentDelegateImpl;
 import com.jess.arms.base.delegate.IFragment;
 import com.jess.arms.integration.cache.Cache;
+import com.jess.arms.integration.cache.IntelligentCache;
 import com.jess.arms.utils.Preconditions;
-
-import timber.log.Timber;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * ================================================
@@ -40,17 +40,23 @@ import timber.log.Timber;
  * <a href="https://github.com/JessYanCoding">Follow me</a>
  * ================================================
  */
+@Singleton
 public class FragmentLifecycle extends FragmentManager.FragmentLifecycleCallbacks {
+
+    @Inject
+    public FragmentLifecycle() {
+    }
 
     @Override
     public void onFragmentAttached(FragmentManager fm, Fragment f, Context context) {
-        Timber.w(f.toString() + " - onFragmentAttached");
         if (f instanceof IFragment) {
             FragmentDelegate fragmentDelegate = fetchFragmentDelegate(f);
             if (fragmentDelegate == null || !fragmentDelegate.isAdded()) {
                 Cache<String, Object> cache = getCacheFromFragment((IFragment) f);
                 fragmentDelegate = new FragmentDelegateImpl(fm, f);
-                cache.put(FragmentDelegate.FRAGMENT_DELEGATE, fragmentDelegate);
+                //使用 IntelligentCache.KEY_KEEP 作为 key 的前缀, 可以使储存的数据永久存储在内存中
+                //否则存储在 LRU 算法的存储空间中, 前提是 Fragment 使用的是 IntelligentCache (框架默认使用)
+                cache.put(IntelligentCache.getKeyOfKeep(FragmentDelegate.FRAGMENT_DELEGATE), fragmentDelegate);
             }
             fragmentDelegate.onAttach(context);
         }
@@ -58,7 +64,6 @@ public class FragmentLifecycle extends FragmentManager.FragmentLifecycleCallback
 
     @Override
     public void onFragmentCreated(FragmentManager fm, Fragment f, Bundle savedInstanceState) {
-        Timber.w(f.toString() + " - onFragmentCreated");
         FragmentDelegate fragmentDelegate = fetchFragmentDelegate(f);
         if (fragmentDelegate != null) {
             fragmentDelegate.onCreate(savedInstanceState);
@@ -67,7 +72,6 @@ public class FragmentLifecycle extends FragmentManager.FragmentLifecycleCallback
 
     @Override
     public void onFragmentViewCreated(FragmentManager fm, Fragment f, View v, Bundle savedInstanceState) {
-        Timber.w(f.toString() + " - onFragmentViewCreated");
         FragmentDelegate fragmentDelegate = fetchFragmentDelegate(f);
         if (fragmentDelegate != null) {
             fragmentDelegate.onCreateView(v, savedInstanceState);
@@ -76,7 +80,6 @@ public class FragmentLifecycle extends FragmentManager.FragmentLifecycleCallback
 
     @Override
     public void onFragmentActivityCreated(FragmentManager fm, Fragment f, Bundle savedInstanceState) {
-        Timber.w(f.toString() + " - onFragmentActivityCreated");
         FragmentDelegate fragmentDelegate = fetchFragmentDelegate(f);
         if (fragmentDelegate != null) {
             fragmentDelegate.onActivityCreate(savedInstanceState);
@@ -85,7 +88,6 @@ public class FragmentLifecycle extends FragmentManager.FragmentLifecycleCallback
 
     @Override
     public void onFragmentStarted(FragmentManager fm, Fragment f) {
-        Timber.w(f.toString() + " - onFragmentStarted");
         FragmentDelegate fragmentDelegate = fetchFragmentDelegate(f);
         if (fragmentDelegate != null) {
             fragmentDelegate.onStart();
@@ -94,7 +96,6 @@ public class FragmentLifecycle extends FragmentManager.FragmentLifecycleCallback
 
     @Override
     public void onFragmentResumed(FragmentManager fm, Fragment f) {
-        Timber.w(f.toString() + " - onFragmentResumed");
         FragmentDelegate fragmentDelegate = fetchFragmentDelegate(f);
         if (fragmentDelegate != null) {
             fragmentDelegate.onResume();
@@ -103,7 +104,6 @@ public class FragmentLifecycle extends FragmentManager.FragmentLifecycleCallback
 
     @Override
     public void onFragmentPaused(FragmentManager fm, Fragment f) {
-        Timber.w(f.toString() + " - onFragmentPaused");
         FragmentDelegate fragmentDelegate = fetchFragmentDelegate(f);
         if (fragmentDelegate != null) {
             fragmentDelegate.onPause();
@@ -112,7 +112,6 @@ public class FragmentLifecycle extends FragmentManager.FragmentLifecycleCallback
 
     @Override
     public void onFragmentStopped(FragmentManager fm, Fragment f) {
-        Timber.w(f.toString() + " - onFragmentStopped");
         FragmentDelegate fragmentDelegate = fetchFragmentDelegate(f);
         if (fragmentDelegate != null) {
             fragmentDelegate.onStop();
@@ -121,7 +120,6 @@ public class FragmentLifecycle extends FragmentManager.FragmentLifecycleCallback
 
     @Override
     public void onFragmentSaveInstanceState(FragmentManager fm, Fragment f, Bundle outState) {
-        Timber.w(f.toString() + " - onFragmentSaveInstanceState");
         FragmentDelegate fragmentDelegate = fetchFragmentDelegate(f);
         if (fragmentDelegate != null) {
             fragmentDelegate.onSaveInstanceState(outState);
@@ -130,7 +128,6 @@ public class FragmentLifecycle extends FragmentManager.FragmentLifecycleCallback
 
     @Override
     public void onFragmentViewDestroyed(FragmentManager fm, Fragment f) {
-        Timber.w(f.toString() + " - onFragmentViewDestroyed");
         FragmentDelegate fragmentDelegate = fetchFragmentDelegate(f);
         if (fragmentDelegate != null) {
             fragmentDelegate.onDestroyView();
@@ -139,7 +136,6 @@ public class FragmentLifecycle extends FragmentManager.FragmentLifecycleCallback
 
     @Override
     public void onFragmentDestroyed(FragmentManager fm, Fragment f) {
-        Timber.w(f.toString() + " - onFragmentDestroyed");
         FragmentDelegate fragmentDelegate = fetchFragmentDelegate(f);
         if (fragmentDelegate != null) {
             fragmentDelegate.onDestroy();
@@ -148,7 +144,6 @@ public class FragmentLifecycle extends FragmentManager.FragmentLifecycleCallback
 
     @Override
     public void onFragmentDetached(FragmentManager fm, Fragment f) {
-        Timber.w(f.toString() + " - onFragmentDetached");
         FragmentDelegate fragmentDelegate = fetchFragmentDelegate(f);
         if (fragmentDelegate != null) {
             fragmentDelegate.onDetach();
@@ -158,7 +153,7 @@ public class FragmentLifecycle extends FragmentManager.FragmentLifecycleCallback
     private FragmentDelegate fetchFragmentDelegate(Fragment fragment) {
         if (fragment instanceof IFragment) {
             Cache<String, Object> cache = getCacheFromFragment((IFragment) fragment);
-            return (FragmentDelegate) cache.get(FragmentDelegate.FRAGMENT_DELEGATE);
+            return (FragmentDelegate) cache.get(IntelligentCache.getKeyOfKeep(FragmentDelegate.FRAGMENT_DELEGATE));
         }
         return null;
     }

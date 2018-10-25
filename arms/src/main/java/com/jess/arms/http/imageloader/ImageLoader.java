@@ -1,21 +1,24 @@
-/**
-  * Copyright 2017 JessYan
-  *
-  * Licensed under the Apache License, Version 2.0 (the "License");
-  * you may not use this file except in compliance with the License.
-  * You may obtain a copy of the License at
-  *
-  *      http://www.apache.org/licenses/LICENSE-2.0
-  *
-  * Unless required by applicable law or agreed to in writing, software
-  * distributed under the License is distributed on an "AS IS" BASIS,
-  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  * See the License for the specific language governing permissions and
-  * limitations under the License.
-  */
+/*
+ * Copyright 2017 JessYan
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jess.arms.http.imageloader;
 
 import android.content.Context;
+import android.support.annotation.Nullable;
+
+import com.jess.arms.utils.Preconditions;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -34,11 +37,12 @@ import javax.inject.Singleton;
  */
 @Singleton
 public final class ImageLoader {
-    private BaseImageLoaderStrategy mStrategy;
+    @Inject
+    @Nullable
+    BaseImageLoaderStrategy mStrategy;
 
     @Inject
-    public ImageLoader(BaseImageLoaderStrategy strategy) {
-        setLoadImgStrategy(strategy);
+    public ImageLoader() {
     }
 
 
@@ -50,6 +54,7 @@ public final class ImageLoader {
      * @param <T>
      */
     public <T extends ImageConfig> void loadImage(Context context, T config) {
+        Preconditions.checkNotNull(mStrategy, "Please implement BaseImageLoaderStrategy and call GlobalConfigModule.Builder#imageLoaderStrategy(BaseImageLoaderStrategy) in the applyOptions method of ConfigModule");
         this.mStrategy.loadImage(context, config);
     }
 
@@ -61,6 +66,7 @@ public final class ImageLoader {
      * @param <T>
      */
     public <T extends ImageConfig> void clear(Context context, T config) {
+        Preconditions.checkNotNull(mStrategy, "Please implement BaseImageLoaderStrategy and call GlobalConfigModule.Builder#imageLoaderStrategy(BaseImageLoaderStrategy) in the applyOptions method of ConfigModule");
         this.mStrategy.clear(context, config);
     }
 
@@ -70,9 +76,11 @@ public final class ImageLoader {
      * @param strategy
      */
     public void setLoadImgStrategy(BaseImageLoaderStrategy strategy) {
+        Preconditions.checkNotNull(strategy, "strategy == null");
         this.mStrategy = strategy;
     }
 
+    @Nullable
     public BaseImageLoaderStrategy getLoadImgStrategy() {
         return mStrategy;
     }
