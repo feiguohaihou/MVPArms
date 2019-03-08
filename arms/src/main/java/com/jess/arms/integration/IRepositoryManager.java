@@ -43,6 +43,7 @@ public interface IRepositoryManager {
     @NonNull
     <T> T obtainRetrofitService(@NonNull Class<T> service);
 
+
     /**
      * 根据传入的 Class 获取对应的 RxCache service
      *
